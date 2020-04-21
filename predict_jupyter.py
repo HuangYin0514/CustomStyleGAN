@@ -1,6 +1,7 @@
 # To add a new cell, type '# %%'
 # To add a new markdown cell, type '# %% [markdown]'
 # %%
+from random import random
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -13,7 +14,7 @@ from run import Trainer
 
 # %%
 GAN = None
-load_model_name = 'model_10.pt'
+load_model_name = 'model_11.pt'
 device = torch.device("cuda:0" if (torch.cuda.is_available()) else "cpu")
 GAN = StyleGAN2(lr=2e-4,
                 image_size=64,
@@ -83,9 +84,12 @@ def generate_images(stylizer, generator, latents, noise):
 GAN.eval()
 # latents and noise
 #####################
+# w
 latents = noise_list(num_rows**2, num_layers, latent_dim)
-n = image_noise(num_rows**2, image_size)
-style_n = noise(num_rows, latent_dim)
+style_n = noise(num_rows, latent_dim)  # mix image
+# noise
+noise_ = custom_image_nosie(num_rows**2, 100)
+n = latent_to_nosie(GAN.N, noise_)
 #####################
 
 # %%
@@ -154,63 +158,14 @@ input_ = torch.randn(10, 100)
 sigmoid_output = GAN.N(input_)
 sigmoid_output_np = sigmoid_output.detach().numpy()
 sigmoid_output_shape = sigmoid_output_np.reshape(-1, 64*64)
-
-# %%
-hist, bin_edges = np.histogram(sigmoid_output_shape[0])
-
-# %%
-plt.hist(x=sigmoid_output_shape[0], bins='auto', color='#0504aa',
-                             alpha=0.7, rwidth=0.85)
-plt.grid(axis='y', alpha=0.75)
-plt.xlabel('Value')
-plt.ylabel('Frequency')
-plt.title('My Very Own Histogram')
-plt.text(23, 45, r'$\mu=15, b=3$')
-maxfreq = n.max()
-# 设置y轴的上限
-plt.ylim(ymax=np.ceil(maxfreq / 10) * 10 if maxfreq % 10 else maxfreq + 10)
+plt.hist(sigmoid_output_shape[0])
 
 
 # %%
-load_model_name1 = 'model_12.pt'
-GAN1 = StyleGAN2(lr=2e-4,
-                 image_size=64,
-                 network_capacity=16,
-                 transparent=False,)
 
-load_temp_GAN1 = torch.load(
-    load_model_name1, map_location=torch.device(device))
-
-for state_name in load_temp_GAN1:
-    GAN1.state_dict()[state_name][:] = load_temp_GAN1[state_name]
-
-load_model_name2 = 'model_10.pt'
-GAN2 = StyleGAN2(lr=2e-4,
-                 image_size=64,
-                 network_capacity=16,
-                 transparent=False,)
-
-load_temp_GAN2 = torch.load(
-    load_model_name2, map_location=torch.device(device))
-
-for state_name in load_temp_GAN2:
-    GAN2.state_dict()[state_name][:] = load_temp_GAN2[state_name]
-
-
-# %%
-mean1 = torch.mean(GAN1.state_dict()[
-                   'S.net.2.weight']-GAN2.state_dict()['S.net.2.weight'])
-mean2 = torch.mean(GAN1.state_dict()[
-                   'G.blocks.0.to_style1.weight']-GAN2.state_dict()['G.blocks.0.to_style1.weight'])
-mean3 = torch.mean(GAN1.state_dict()[
-                   'D.blocks.0.net.0.weight']-GAN2.state_dict()['D.blocks.0.net.0.weight'])
-mean4 = torch.mean(GAN1.state_dict()[
-                   'SE.net.0.weight']-GAN2.state_dict()['SE.net.0.weight'])
-mean5 = torch.mean(GAN1.state_dict()[
-                   'GE.blocks.0.to_style2.weight']-GAN2.state_dict()['GE.blocks.0.to_style2.weight'])
-print([mean1, mean2, mean3, mean4, mean5])
-
-# %%
-list1 = list(np.random.randn(1000))
-plt.hist(list1)                            
-# %%
+# get_latents_fn = mixed_list if random() < 0.9 else noise_list
+get_latents_fn = noise_list
+style = get_latents_fn(batch_size, num_layers, latent_dim)
+w_space = latent_to_w(GAN.S, style)
+w_styles = styles_def_to_tensor(w_space)
+plt.hist(w_styles[0,0,:].detach().numpy())
