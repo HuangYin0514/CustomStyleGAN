@@ -21,7 +21,7 @@ print(res)
 # %%
 custom_GAN = StyleGAN2(64)
 load_temp = torch.load(
-    'model_10.pt', map_location=torch.device(device))
+    'model_12.pt', map_location=torch.device(device))
 
 # %%
 for i in load_temp:

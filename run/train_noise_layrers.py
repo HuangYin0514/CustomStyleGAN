@@ -164,9 +164,8 @@ class Trainer():
                 w_styles_2 = w_styles + \
                     torch.randn(w_styles.shape).to(device) / (std + EPS)
                 pl_images = self.GAN.G(w_styles_2, noise_space)
-                pl_lengths = ((pl_images - generated_images)**2).mean(dim=(1,
-                                                                           2,
-                                                                           3))
+                pl_lengths = ((pl_images - generated_images)
+                              ** 2).mean(dim=(1, 2, 3))
                 avg_pl_length = np.mean(pl_lengths.detach().cpu().numpy())
 
                 if self.pl_mean is not None:
