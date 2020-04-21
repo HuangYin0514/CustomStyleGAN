@@ -1,19 +1,22 @@
 import json
+import multiprocessing
 from math import floor, log2
+from pathlib import Path
 from random import random
 from shutil import rmtree
-import multiprocessing
-import torch.backends.cudnn as cudnn
 
 import numpy as np
 import torch
-from torch.utils import data
+import torch.backends.cudnn as cudnn
 import torch.nn.functional as F
 import torchvision
-from pathlib import Path
-from utils import *
+import torchvision.utils as vutils
+from tensorboardX import SummaryWriter
+from torch.utils import data
+
 from datasets.Datasets import Dataset
 from net import StyleGAN2
+from utils import *
 
 num_cores = multiprocessing.cpu_count()
 
@@ -30,6 +33,7 @@ class Trainer():
                  name,
                  results_dir,
                  models_dir,
+                 log_dir,
                  image_size,
                  network_capacity,
                  transparent=False,
@@ -48,7 +52,10 @@ class Trainer():
         self.name = name
         self.results_dir = Path(results_dir)
         self.models_dir = Path(models_dir)
+        self.log_dir = log_dir
         self.config_path = self.models_dir / name / '.config.json'
+
+        self.tb_writer = SummaryWriter(self.log_dir / name)
 
         assert log2(image_size).is_integer(
         ), 'image size must be a power of 2 (64, 128, 256, 512, 1024)'
@@ -227,6 +234,10 @@ class Trainer():
         if self.steps <= 25000 and self.steps % 1000 == 2:
             self.GAN.reset_parameter_averaging()
 
+        self.tb_writer.add_scalars('Train/loss', {'loss_G': self.g_loss,
+                                                  'loss_D': self.d_loss,
+                                                  }, self.steps)
+
         # save from NaN errors
         checkpoint_num = floor(self.steps / self.save_every)
         if any(torch.isnan(l) for l in (total_gen_loss, total_disc_loss)):
@@ -278,6 +289,10 @@ class Trainer():
                                      str(self.results_dir / self.name /
                                          f'{str(num)}.{ext}'),
                                      nrow=num_rows)
+        generated_images = vutils.make_grid(generated_images.detach().cpu(),
+                                            padding=2,
+                                            normalize=True)
+        self.tb_writer.add_image('regular', generated_images, self.steps)
 
         # moving averages
         generated_images = self.generate_truncated(self.GAN.SE,
@@ -289,6 +304,11 @@ class Trainer():
                                      str(self.results_dir / self.name /
                                          f'{str(num)}-ema.{ext}'),
                                      nrow=num_rows)
+        generated_images = vutils.make_grid(generated_images.detach().cpu(),
+                                            padding=2,
+                                            normalize=True)
+        self.tb_writer.add_image(
+            'moving averages', generated_images, self.steps)
 
         # mixing regularities
         def tile(a, dim, n_tile):
@@ -316,6 +336,11 @@ class Trainer():
                                      str(self.results_dir / self.name /
                                          f'{str(num)}-mr.{ext}'),
                                      nrow=num_rows)
+        generated_images = vutils.make_grid(generated_images.detach().cpu(),
+                                            padding=2,
+                                            normalize=True)
+        self.tb_writer.add_image(
+            'mixing regularities', generated_images, self.steps)
 
     @torch.no_grad()
     def generate_truncated(self, S, G, style, noi, trunc_psi=0.6, num_image_tiles=8):
@@ -350,10 +375,13 @@ class Trainer():
     def init_folders(self):
         (self.results_dir / self.name).mkdir(parents=True, exist_ok=True)
         (self.models_dir / self.name).mkdir(parents=True, exist_ok=True)
+        rmtree(f'./logs/{self.name}', True)
+        (self.log_dir / self.name).mkdir(parents=True, exist_ok=True)
 
     def clear(self):
         rmtree(f'./models/{self.name}', True)
         rmtree(f'./results/{self.name}', True)
+        rmtree(f'./logs/{self.name}', True)
         rmtree(str(self.config_path), True)
         self.init_folders()
 
