@@ -271,7 +271,7 @@ class Trainer():
         # w
         latents = noise_list(num_rows**2, num_layers, latent_dim)
         # noise
-        noise_ = custom_image_nosie(batch_size, 100)
+        noise_ = custom_image_nosie(num_rows**2, 100)
         n = latent_to_nosie(self.GAN.N, noise_)
 
         # regular
