@@ -1,1 +1,1 @@
-from .train_noise_layrers import Trainer
+from .TrainStylegan2WithNoise import Trainer

@@ -13,7 +13,7 @@ from run import Trainer
 
 # %%
 GAN = None
-load_model_name = 'model_12.pt'
+load_model_name = 'model_10.pt'
 device = torch.device("cuda:0" if (torch.cuda.is_available()) else "cpu")
 GAN = StyleGAN2(lr=2e-4,
                 image_size=64,
@@ -83,9 +83,9 @@ def generate_images(stylizer, generator, latents, noise):
 GAN.eval()
 # latents and noise
 #####################
-# latents = noise_list(num_rows**2, num_layers, latent_dim)
-# n = image_noise(num_rows**2, image_size)
-# style_n = noise(num_rows, latent_dim)
+latents = noise_list(num_rows**2, num_layers, latent_dim)
+n = image_noise(num_rows**2, image_size)
+style_n = noise(num_rows, latent_dim)
 #####################
 
 # %%
@@ -159,7 +159,7 @@ sigmoid_output_shape = sigmoid_output_np.reshape(-1, 64*64)
 hist, bin_edges = np.histogram(sigmoid_output_shape[0])
 
 # %%
-n1, bins, patches = plt.hist(x=sigmoid_output_shape[0], bins='auto', color='#0504aa',
+plt.hist(x=sigmoid_output_shape[0], bins='auto', color='#0504aa',
                              alpha=0.7, rwidth=0.85)
 plt.grid(axis='y', alpha=0.75)
 plt.xlabel('Value')
@@ -170,28 +170,6 @@ maxfreq = n.max()
 # 设置y轴的上限
 plt.ylim(ymax=np.ceil(maxfreq / 10) * 10 if maxfreq % 10 else maxfreq + 10)
 
-
-# %%
-class EMA():
-    def __init__(self, beta):
-        super().__init__()
-        self.beta = beta
-
-    def update_average(self, old, new):
-        if old is None:
-            return new
-        return old * self.beta + (1 - self.beta) * new
-
-
-ema = EMA(0.995)
-list1 = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
-list1
-
-# %%
-res = []
-for _ in list1:
-    res.append(ema.update_average(2, _))
-res
 
 # %%
 load_model_name1 = 'model_12.pt'
@@ -232,4 +210,7 @@ mean5 = torch.mean(GAN1.state_dict()[
                    'GE.blocks.0.to_style2.weight']-GAN2.state_dict()['GE.blocks.0.to_style2.weight'])
 print([mean1, mean2, mean3, mean4, mean5])
 
+# %%
+list1 = list(np.random.randn(1000))
+plt.hist(list1)                            
 # %%

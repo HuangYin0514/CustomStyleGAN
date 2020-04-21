@@ -42,7 +42,6 @@ class Trainer():
                  num_workers=None,
                  save_every=1000,
                  trunc_psi=0.6,
-                 *args,
                  **kwargs):
         self.GAN_params = [args, kwargs]
         self.GAN = None
