@@ -16,7 +16,7 @@ class NoiseVectorizer(nn.Module):
             nn.Linear(1024, 2048),
             leaky_relu(0.2),
             nn.Linear(2048, 4096),
-            nn.Sigmoid()
+            leaky_relu(0.2)
         )
 
     def forward(self, x):
