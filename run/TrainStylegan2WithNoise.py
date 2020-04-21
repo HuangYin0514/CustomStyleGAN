@@ -52,7 +52,7 @@ class Trainer():
         self.name = name
         self.results_dir = Path(results_dir)
         self.models_dir = Path(models_dir)
-        self.log_dir = Path(log_dir)
+        self.log_dir = Path(log_dirad)
         self.config_path = self.models_dir / name / '.config.json'
 
         self.tb_writer = SummaryWriter(self.log_dir / name)
