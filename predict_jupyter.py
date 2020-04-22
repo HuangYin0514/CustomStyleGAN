@@ -14,7 +14,7 @@ from run import Trainer
 
 # %%
 GAN = None
-load_model_name = 'model_11.pt'
+load_model_name = 'model_14WithNoise.pt'
 device = torch.device("cuda:0" if (torch.cuda.is_available()) else "cpu")
 GAN = StyleGAN2(lr=2e-4,
                 image_size=64,
@@ -47,10 +47,10 @@ save_every = 10000
 generate = False
 num_image_tiles = 8
 trunc_psi = 0.6
-
 transparent = False
 num_image_tiles = 8
 batch_size = 64
+log_dir='./GoodResult/logs'
 ext = 'jpg' if not transparent else 'png'
 num_rows = num_image_tiles
 latent_dim = GAN.G.latent_dim
@@ -60,6 +60,7 @@ num_layers = GAN.G.num_layers
 trainer = Trainer(name,
                   results_dir,
                   models_dir,
+                  log_dir,
                   batch_size=batch_size,
                   gradient_accumulate_every=gradient_accumulate_every,
                   image_size=image_size,
@@ -154,18 +155,23 @@ plt.imshow(np.transpose(vutils.make_grid(generated_images,
 
 
 # %%
+#noise
 input_ = torch.randn(10, 100)
 sigmoid_output = GAN.N(input_)
 sigmoid_output_np = sigmoid_output.detach().numpy()
 sigmoid_output_shape = sigmoid_output_np.reshape(-1, 64*64)
 plt.hist(sigmoid_output_shape[0])
-
+# %%
+plt.hist(noise_[0])
 
 # %%
-
+#w
 # get_latents_fn = mixed_list if random() < 0.9 else noise_list
 get_latents_fn = noise_list
 style = get_latents_fn(batch_size, num_layers, latent_dim)
 w_space = latent_to_w(GAN.S, style)
 w_styles = styles_def_to_tensor(w_space)
-plt.hist(w_styles[0,0,:].detach().numpy())
+plt.hist(w_styles[0, 0, :].detach().numpy())
+
+
+

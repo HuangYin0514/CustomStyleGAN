@@ -237,6 +237,7 @@ class Trainer():
         self.tb_writer.add_scalars('Train/loss', {'loss_G': self.g_loss,
                                                   'loss_D': self.d_loss,
                                                   }, self.steps)
+        self.tb_writer.flush()
 
         # save from NaN errors
         checkpoint_num = floor(self.steps / self.save_every)
@@ -341,6 +342,7 @@ class Trainer():
                                             normalize=True)
         self.tb_writer.add_image(
             'mixing regularities', generated_images, self.steps)
+        self.tb_writer.flush()
 
     @torch.no_grad()
     def generate_truncated(self, S, G, style, noi, trunc_psi=0.6, num_image_tiles=8):
