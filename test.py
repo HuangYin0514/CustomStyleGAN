@@ -7,7 +7,8 @@ import fire
 from net import *
 
 if __name__ == '__main__':
-    bs = 12
-    a = custom_image_nosie(bs, 100)
-    res = latent_to_nosie(NoiseVectorizer, a)
-    print(res)
+    inp = torch.rand(64, 3, 64, 64)
+    print(inp.shape)
+    netE = ExtractNet()
+    out = netE(inp)
+    print(out.shape)
