@@ -4,18 +4,29 @@
     // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-    
         {
-            "name": "Python: 当前文件",
+            "name": "main_GAN",
             "type": "python",
             "request": "launch",
-            "program": "main.py",
+            "program": "main_GANt.py",
             "console": "integratedTerminal",
             "args": [
                 "--batch_size=3",
                 "--num_train_steps=1000000",
                 "--image_size=64",
                 "--generate",
+                "--load-from=14"
+            ]
+        },
+        {
+            "name": "main_ExtractNet",
+            "type": "python",
+            "request": "launch",
+            "program": "main_ExtractNet.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--batch_size=3",
+                "--num_train_steps=1000000",
                 "--load-from=14"
             ]
         }

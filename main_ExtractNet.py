@@ -7,18 +7,19 @@ from utils import NanException
 from datetime import datetime
 
 
-def train_from_folder(data='../../gan/custom_dataset',
+def train_from_folder(data='CustomNone',
                       results_dir='./GoodResult/results',
                       models_dir='./GoodResult/models',
                       log_dir='./GoodResult/logs',
-                      name='mytest',
+                      name='ExtractNet',
                       new=False,
                       load_from=11,
                       batch_size=3,
                       num_train_steps=120000,
                       learning_rate=2e-4,
                       save_every=10000,
-                      valid_acc=False, ):
+                      valid_acc=False,
+                      StyleGAN_load_from=14):
 
     trainer = Trainer(name,
                       results_dir,
@@ -27,6 +28,9 @@ def train_from_folder(data='../../gan/custom_dataset',
                       batch_size=batch_size,
                       lr=learning_rate,
                       save_every=save_every,)
+
+    trainer.init_StyleGAN(StyleGAN_load_from)
+
     # TODO
     if valid_acc:
         return

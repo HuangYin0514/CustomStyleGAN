@@ -16,7 +16,7 @@ from tensorboardX import SummaryWriter
 from torch.utils import data
 
 from datasets.Datasets import Dataset
-from net import StyleGAN2
+from net import StyleGAN2,ExtractNet
 from utils import *
 
 # Decide which device we want to run on
@@ -24,7 +24,6 @@ device = torch.device("cuda:0" if (torch.cuda.is_available()) else "cpu")
 # speed up
 cudnn.benchmark = True
 num_cores = multiprocessing.cpu_count()
-
 
 
 class Trainer():
@@ -38,8 +37,9 @@ class Trainer():
                  save_every=1000,
                  *args,
                  **kwargs):
-        self.ExtractNet_params = [args, kwargs]
-        self.GAN = None
+        self.Net_params = [args, kwargs]
+        self.StyleGAN = None
+        self.ExtractNet = None
 
         self.name = name
         self.results_dir = Path(results_dir)
@@ -52,18 +52,32 @@ class Trainer():
 
         self.save_every = save_every
         self.steps = 0
-
         self.loss = 0
-
         self.init_folders()
+
+    def init_StyleGAN(self, num):
+        self.StyleGAN = StyleGAN2(lr=self.lr, image_size=64, )
+        self.StyleGAN.to(device)
+
+        name = num
+        load_model_name = f'model_{name}.pt'
+        load_temp_GAN = torch.load(
+            load_model_name, map_location=torch.device(device))
+        for state_name in load_temp_GAN:
+            self.StyleGAN.state_dict(
+            )[state_name][:] = load_temp_GAN[state_name]
+        print(f'load stylegan from {load_model_name}')
+
+    def init_ExtractNet(self):
+            self.ExtractNet = ExtractNet(lr=self.lr)
+            self.ExtractNet.to(device)
+            
 
     # TODO
     def train(self):
-        pass
 
-    # TODO
-    @torch.no_grad()
-    def evaluate(self):
+        # assert self.GAN is not None, 'You must first initialize the GAN'
+
         pass
 
     def init_folders(self):
@@ -72,24 +86,8 @@ class Trainer():
         rmtree(f'./logs/{self.name}', True)
         (self.log_dir / self.name).mkdir(parents=True, exist_ok=True)
 
-    def model_name(self, num):
-        return str(self.models_dir / self.name / f'model_{num}.pt')
-
-    def clear(self):
-        rmtree(f'./models/{self.name}', True)
-        rmtree(f'./results/{self.name}', True)
-        rmtree(f'./logs/{self.name}', True)
-        rmtree(str(self.config_path), True)
-        self.init_folders()
-
-    # TODO save model
-    def save(self, num):
-        torch.save(self.GAN.state_dict(), self.model_name(num))
-        self.write_config()
-
     # TODO laod model
     def load_part_state_dict(self, num=-1):
-        self.load_config()
 
         name = num
         if num == -1:
@@ -102,13 +100,13 @@ class Trainer():
                 return
             name = saved_nums[-1]
             print(f'continuing from previous epoch - {name}')
-        self.steps = name * self.save_every
-        load_model_name = f'model_{name}.pt'
 
-        load_temp_GAN = torch.load(
+        load_model_name = f'model_{name}.pt'
+        ExtractNet = torch.load(
             load_model_name, map_location=torch.device(device))
 
-        for state_name in load_temp_GAN:
-            self.GAN.state_dict()[state_name][:] = load_temp_GAN[state_name]
+        for state_name in ExtractNet:
+            self.ExtractNet.state_dict(
+            )[state_name][:] = ExtractNet[state_name]
 
         print(load_model_name)
