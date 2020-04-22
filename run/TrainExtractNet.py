@@ -16,7 +16,7 @@ from tensorboardX import SummaryWriter
 from torch.utils import data
 
 from datasets.Datasets import Dataset
-from net import StyleGAN2,ExtractNet
+from net import StyleGAN2, ExtractNet
 from utils import *
 
 # Decide which device we want to run on
@@ -35,6 +35,8 @@ class Trainer():
                  batch_size=4,
                  lr=2e-4,
                  save_every=1000,
+                 mixed_prob=0.9,
+                 epoch_number=10,
                  *args,
                  **kwargs):
         self.Net_params = [args, kwargs]
@@ -49,6 +51,8 @@ class Trainer():
 
         self.lr = lr
         self.batch_size = batch_size
+        self.mixed_prob = mixed_prob
+        self.epoch_number = epoch_number
 
         self.save_every = save_every
         self.steps = 0
@@ -69,16 +73,53 @@ class Trainer():
         print(f'load stylegan from {load_model_name}')
 
     def init_ExtractNet(self):
-            self.ExtractNet = ExtractNet(lr=self.lr)
-            self.ExtractNet.to(device)
-            
+        self.ExtractNet = ExtractNet(lr=self.lr)
+        self.ExtractNet.to(device)
+
+    def sample_StyleGAN_input_data(self):
+        batch_size = self.batch_size
+        latent_dim = self.StyleGAN.G.latent_dim
+        num_layers = self.StyleGAN.G.num_layers
+        # w
+        get_latents_fn = mixed_list if random() < self.mixed_prob else noise_list
+        style = get_latents_fn(batch_size, num_layers, latent_dim)
+        w_space = latent_to_w(self.StyleGAN.S, style)
+        w_styles = styles_def_to_tensor(w_space)
+        # noise
+        noise = custom_image_nosie(batch_size, 100)
+        noise_styles = latent_to_nosie(self.StyleGAN.N, noise)
+        secret = noise
+        return w_styles, noise_styles, secret
 
     # TODO
     def train(self):
 
-        # assert self.GAN is not None, 'You must first initialize the GAN'
+        if self.ExtractNet is None:
+            self.init_ExtractNet()
+        assert self.StyleGAN is not None, 'You must first initialize the Style GAN'
 
-        pass
+        total_loss = torch.tensor(0.).to(device)
+
+        # train
+        self.ExtractNet.E_opt.zero_grad()
+        for _ in range(self.epoch_number):
+            w_styles, noise_styles, secret = self.sample_StyleGAN_input_data()
+            generated_images = self.StyleGAN.G(w_styles, noise_styles)
+            decode = self.ExtractNet.E(generated_images.clone().detach())
+            divergence = F.mse_loss(decode,secret)
+            decode_loss = divergence
+            decode_loss.register_hook(raise_if_nan)
+            decode_loss.backward()
+            # record total loss
+            total_loss += divergence.detach().item(
+            ) / self.epoch_number
+        self.loss = float(total_loss)    
+        self.ExtractNet.E_opt.step()
+
+        self.tb_writer.add_scalar('Train/loss', self.loss, self.steps)
+        self.tb_writer.flush()
+
+        self.steps += 1
 
     def init_folders(self):
         (self.results_dir / self.name).mkdir(parents=True, exist_ok=True)

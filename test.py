@@ -7,8 +7,10 @@ import fire
 from net import *
 
 if __name__ == '__main__':
-    inp = torch.rand(64, 3, 64, 64)
-    print(inp.shape)
-    netE = ExtractNet()
-    out = netE(inp)
-    print(out.shape)
+    res = 0
+    res1 = 0
+    for i in range(10):
+        res +=  (i/10)
+        res1 +=i
+    print(res)
+    print(res1)
