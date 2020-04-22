@@ -7,10 +7,12 @@ import fire
 from net import *
 
 if __name__ == '__main__':
-    res = 0
-    res1 = 0
-    for i in range(10):
-        res +=  (i/10)
-        res1 +=i
-    print(res)
-    print(res1)
+    # list1 = [12, 3, 4, 5]
+    # list2 = [12, 3, 4, 5]
+    # list3 = [12, 3, 4, 5]
+    # list_t = [list1, list2, list3]
+    # res = list(list(map(lambda x: x/10, i)) for i in list_t)
+    # print(res)
+    a = torch. randn(1, 3)
+    b = torch. randn(1, 3)
+    print(compute_BER(a, b, sigma=1))

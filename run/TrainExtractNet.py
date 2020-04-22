@@ -36,7 +36,7 @@ class Trainer():
                  lr=2e-4,
                  save_every=1000,
                  mixed_prob=0.9,
-                 epoch_number=10,
+                 epoch_number=100,
                  *args,
                  **kwargs):
         self.Net_params = [args, kwargs]
@@ -99,6 +99,7 @@ class Trainer():
         assert self.StyleGAN is not None, 'You must first initialize the Style GAN'
 
         total_loss = torch.tensor(0.).to(device)
+        BER_1, BER_2, BER_3 = 0., 0., 0.
 
         # train
         self.ExtractNet.E_opt.zero_grad()
@@ -106,20 +107,43 @@ class Trainer():
             w_styles, noise_styles, secret = self.sample_StyleGAN_input_data()
             generated_images = self.StyleGAN.G(w_styles, noise_styles)
             decode = self.ExtractNet.E(generated_images.clone().detach())
-            divergence = F.mse_loss(decode,secret)
+            divergence = F.mse_loss(decode, secret)
             decode_loss = divergence
             decode_loss.register_hook(raise_if_nan)
             decode_loss.backward()
             # record total loss
             total_loss += divergence.detach().item(
             ) / self.epoch_number
-        self.loss = float(total_loss)    
+            # compute BER
+            BER_1 += compute_BER(decode.detach(), secret,
+                                 sigma=1) / self.epoch_number
+            BER_2 += compute_BER(decode.detach(), secret,
+                                 sigma=2) / self.epoch_number
+            BER_3 += compute_BER(decode.detach(), secret,
+                                 sigma=3) / self.epoch_number
+
+        self.loss = float(total_loss)
         self.ExtractNet.E_opt.step()
 
         self.tb_writer.add_scalar('Train/loss', self.loss, self.steps)
+        self.tb_writer.add_scalars('Train/BERs',  {'BER1': BER_1,
+                                                   'BER2': BER_2,
+                                                   'BER3': BER_3
+                                                   }, self.steps)
         self.tb_writer.flush()
+        # save from NaN errors
+        checkpoint_num = floor(self.steps / self.save_every)
+        # periodically save results
+        if self.steps % self.save_every == 0:
+            self.save(checkpoint_num)
 
         self.steps += 1
+
+    def model_name(self, num):
+        return str(self.models_dir / self.name / f'model_E{num}.pt')
+
+    def save(self, num):
+        torch.save(self.ExtractNet.state_dict(), self.model_name(num))
 
     def init_folders(self):
         (self.results_dir / self.name).mkdir(parents=True, exist_ok=True)
