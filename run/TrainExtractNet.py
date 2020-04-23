@@ -37,7 +37,7 @@ class Trainer():
                  lr=2e-4,
                  save_every=1000,
                  mixed_prob=0.9,
-                 epoch_number=100,
+                 epoch_number=1,
                  *args,
                  **kwargs):
         self.Net_params = [args, kwargs]
@@ -58,6 +58,7 @@ class Trainer():
         self.save_every = save_every
         self.steps = 0
         self.loss = 0
+        self.BER_1, self.BER_2, self.BER_3 = 0., 0., 0.
         self.init_folders()
 
     def init_StyleGAN(self, num):
@@ -123,6 +124,7 @@ class Trainer():
                                  sigma=3) / self.epoch_number
 
         self.loss = float(total_loss)
+        self.BER_1, self.BER_2, self.BER_3 =  BER_1, BER_2, BER_3
         self.ExtractNet.E_opt.step()
 
         self.tb_writer.add_scalar('Train/loss', self.loss, self.steps)
@@ -150,6 +152,11 @@ class Trainer():
         (self.models_dir / self.name).mkdir(parents=True, exist_ok=True)
         rmtree(f'./logs/{self.name}', True)
         (self.log_dir / self.name).mkdir(parents=True, exist_ok=True)
+
+    def print_log(self):
+        print(
+            f'E: {self.loss:.2f} | BER_1: {self.BER_1:.2f} | BER_2: {self.BER_2:.2f} | BER_3: {self.BER_3:.2f}'
+        )
 
     def load_part_state_dict(self, num=-1):
 

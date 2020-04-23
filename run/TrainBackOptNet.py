@@ -1,4 +1,3 @@
-
 import json
 import multiprocessing
 from math import floor, log2
@@ -40,8 +39,7 @@ class Trainer():
                  *args,
                  **kwargs):
         self.Net_params = [args, kwargs]
-        self.StyleGAN = None
-        self.ExtractNet = None
+        self.NET = None
 
         self.name = name
         self.results_dir = Path(results_dir)
@@ -59,6 +57,10 @@ class Trainer():
         self.loss = 0
         self.init_folders()
 
+    def init_NET(self):
+        self.NET = BackOptNet(self.lr)
+        self.NET.to(device)
+
     def train(self):
         pass
 
@@ -75,4 +77,30 @@ class Trainer():
         (self.log_dir / self.name).mkdir(parents=True, exist_ok=True)
 
     def load_part_state_dict(self, style_num=-1, extract_num=-1):
-        print('t')
+        if self.NET is None:
+            self.init_NET()
+
+        name = style_num
+        load_model_name = f'model_{name}.pt'
+        load_model = torch.load(
+            load_model_name, map_location=torch.device(device))
+        # load style gan
+        dont_load_list = []
+        for state_name in load_model:
+            try:
+                self.NET.state_dict(
+                )[state_name][:] = load_model[state_name]
+            except KeyError as identifier:
+                dont_load_list.append(identifier)
+        print(f'load from {load_model_name}')
+        print(f'dont load {dont_load_list[0:2]} ...')
+
+        # load extract
+        load_model_name = f'modelE_{extract_num}.pt'
+        load_model = torch.load(
+            load_model_name, map_location=torch.device(device))
+        for state_name in load_model:
+            self.NET.state_dict(
+            )[state_name][:] = load_model[state_name]
+        print(f'load from {load_model_name}')
+        # print(self.NET)

@@ -6,8 +6,17 @@ from net import *
 
 class BackOptNet(nn.Module):
 
-    def __init__(self, lr=2e-4, steps=1, beta1=0.5, beta2=0.999, latent_dim=512, noise_dim=100,
-                 image_size=64, network_capacity=16, transparent=False, style_depth=8):
+    def __init__(self,
+                 lr=2e-4,
+                 steps=1,
+                 beta1=0.5,
+                 beta2=0.999,
+                 latent_dim=512,
+                 noise_dim=100,
+                 image_size=64,
+                 network_capacity=16,
+                 transparent=False,
+                 style_depth=8):
         super().__init__()
         self.lr = lr
         self.steps = steps

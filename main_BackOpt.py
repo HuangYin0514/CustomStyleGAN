@@ -2,9 +2,9 @@
 import fire
 from retry.api import retry_call
 from tqdm import tqdm
-from run. import Trainer
 from utils import NanException
 from datetime import datetime
+from run.TrainBackOptNet import Trainer
 
 
 def train_from_folder(data='CustomNone',
@@ -13,7 +13,8 @@ def train_from_folder(data='CustomNone',
                       log_dir='./GoodResult/logs',
                       name='ExtractNet',
                       new=False,
-                      load_from=11,
+                      load_from_extract=0,
+                      load_from_style=14,
                       batch_size=3,
                       num_train_steps=50000,
                       learning_rate=2e-4,
@@ -29,11 +30,8 @@ def train_from_folder(data='CustomNone',
                       lr=learning_rate,
                       save_every=save_every,)
 
-    # init style gan not extract
-    trainer.init_StyleGAN(StyleGAN_load_from)
-
     if not new:
-        trainer.load_part_state_dict(load_from)
+        trainer.load_part_state_dict(load_from_style, load_from_extract)
     else:
         trainer.clear()
 

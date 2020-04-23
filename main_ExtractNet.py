@@ -29,7 +29,7 @@ def train_from_folder(data='CustomNone',
                       lr=learning_rate,
                       save_every=save_every,)
 
-    #init style gan not extract
+    # init style gan not extract
     trainer.init_StyleGAN(StyleGAN_load_from)
 
     if not new:
@@ -52,8 +52,7 @@ def train_from_folder(data='CustomNone',
             if datetime.now().timestamp() - train_now > 29880:
                 break
         if _ % 50 == 0:
-            # TODO log
-            pass
+            trainer.print_log()
 
 
 if __name__ == "__main__":
