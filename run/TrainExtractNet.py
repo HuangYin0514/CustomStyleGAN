@@ -61,6 +61,7 @@ class Trainer():
         self.BER_1, self.BER_2, self.BER_3 = 0., 0., 0.
         self.MSELoss = nn.MSELoss()
         self.init_folders()
+        self.fix = torch.rand(self.batch_size,100)
 
     def init_StyleGAN(self, num):
         self.StyleGAN = StyleGAN2(lr=self.lr, image_size=64, )
@@ -101,11 +102,11 @@ class Trainer():
         assert self.StyleGAN is not None, 'You must first initialize the Style GAN'
 
         # train
-        self.ExtractNet.E_opt.zero_grad()
+        self.ExtractNet.E.zero_grad()
         w_styles, noise_styles, secret = self.sample_StyleGAN_input_data()
         generated_images = self.StyleGAN.G(w_styles, noise_styles)
         decode = self.ExtractNet.E(generated_images.clone().detach())
-        divergence = self.MSELoss(decode, secret)
+        divergence = self.MSELoss(decode,secret)
         E_loss = divergence
         E_loss.register_hook(raise_if_nan)
         E_loss.backward()
