@@ -57,8 +57,9 @@ class Trainer():
 
         self.save_every = save_every
         self.steps = 0
-        self.loss = 0
+        self.E_loss = 0
         self.BER_1, self.BER_2, self.BER_3 = 0., 0., 0.
+        self.MSELoss = nn.MSELoss()
         self.init_folders()
 
     def init_StyleGAN(self, num):
@@ -99,35 +100,27 @@ class Trainer():
             self.init_ExtractNet()
         assert self.StyleGAN is not None, 'You must first initialize the Style GAN'
 
-        total_loss = torch.tensor(0.).to(device)
         BER_1, BER_2, BER_3 = 0., 0., 0.
 
         # train
         self.ExtractNet.E_opt.zero_grad()
-        for _ in range(self.epoch_number):
-            w_styles, noise_styles, secret = self.sample_StyleGAN_input_data()
-            generated_images = self.StyleGAN.G(w_styles, noise_styles)
-            decode = self.ExtractNet.E(generated_images.clone().detach())
-            divergence = F.mse_loss(decode, secret)
-            decode_loss = divergence
-            decode_loss.register_hook(raise_if_nan)
-            decode_loss.backward()
-            # record total loss
-            total_loss += divergence.detach().item(
-            ) / self.epoch_number
-            # compute BER
-            BER_1 += compute_BER(decode.detach(), secret,
-                                 sigma=1) / self.epoch_number
-            BER_2 += compute_BER(decode.detach(), secret,
-                                 sigma=2) / self.epoch_number
-            BER_3 += compute_BER(decode.detach(), secret,
-                                 sigma=3) / self.epoch_number
+        w_styles, noise_styles, secret = self.sample_StyleGAN_input_data()
+        generated_images = self.StyleGAN.G(w_styles, noise_styles)
+        decode = self.ExtractNet.E(generated_images.clone().detach())
+        divergence = self.MSELoss(decode, secret)
+        E_loss = divergence
+        E_loss.register_hook(raise_if_nan)
+        E_loss.backward()
+        # record total loss
+        # compute BER
+        self.BER_1 = compute_BER(decode.detach(), secret, sigma=1)
+        self.BER_2 = compute_BER(decode.detach(), secret, sigma=2)
+        self.BER_3 = compute_BER(decode.detach(), secret, sigma=3)
 
-        self.loss = float(total_loss)
-        self.BER_1, self.BER_2, self.BER_3 =  BER_1, BER_2, BER_3
+        self.E_loss = float(divergence.detach().item())
         self.ExtractNet.E_opt.step()
 
-        self.tb_writer.add_scalar('Train/loss', self.loss, self.steps)
+        self.tb_writer.add_scalar('Train/loss', self.E_loss, self.steps)
         self.tb_writer.add_scalars('Train/BERs',  {'BER1': BER_1,
                                                    'BER2': BER_2,
                                                    'BER3': BER_3
@@ -155,7 +148,7 @@ class Trainer():
 
     def print_log(self):
         print(
-            f'E: {self.loss:.2f} | BER_1: {self.BER_1:.2f} | BER_2: {self.BER_2:.2f} | BER_3: {self.BER_3:.2f}'
+            f'E: {self.E_loss:.2f} | BER_1: {self.BER_1:.2f} | BER_2: {self.BER_2:.2f} | BER_3: {self.BER_3:.2f}'
         )
 
     def load_part_state_dict(self, num=-1):
