@@ -1,72 +1,68 @@
 from torch import nn
+from utils import leaky_relu
+import torch
+from math import log2
 
 
-def weights_init(m):
-    classname = m.__class__.__name__
-    if classname.find('Conv') != -1:
-        m.weight.data.normal_(0.0, 0.02)
-    elif classname.find('BatchNorm') != -1:
-        m.weight.data.normal_(1.0, 0.02)
-        m.bias.data.fill_(0)
+class DiscriminatorBlock(nn.Module):
+    def __init__(self, input_channels, filters, downsample=True):
+        super().__init__()
+        self.conv_res = nn.Conv2d(input_channels, filters, 1)
+
+        self.net = nn.Sequential(
+            nn.Conv2d(input_channels, filters, 3, padding=1),
+            leaky_relu(0.2),
+            nn.Conv2d(filters, filters, 3, padding=1),
+            leaky_relu(0.2)
+        )
+
+        self.downsample = nn.Conv2d(
+            filters, filters, 3, padding=1, stride=2) if downsample else None
+
+    def forward(self, x):
+        res = self.conv_res(x)
+        x = self.net(x)
+        x = x + res
+        if self.downsample is not None:
+            x = self.downsample(x)
+        return x
 
 
 class ExtractModule(nn.Module):
-    def __init__(self):
+    def __init__(self, image_size=64, network_capacity=16, transparent=False):
         super().__init__()
-        self.relu = nn.LeakyReLU(negative_slope=0.2, inplace=True)
-        self.conv1 = nn.Conv2d(in_channels=3,
-                               out_channels=64,
-                               kernel_size=4,
-                               stride=2,
-                               padding=1,
-                               bias=False)
-        self.conv2 = nn.Conv2d(in_channels=64,
-                               out_channels=64 * 2,
-                               kernel_size=4,
-                               stride=2,
-                               padding=1,
-                               bias=False)
-        self.batch_norm2 = nn.BatchNorm2d(64 * 2)
-        self.conv3 = nn.Conv2d(in_channels=64 * 2,
-                               out_channels=64 * 4,
-                               kernel_size=4,
-                               stride=2,
-                               padding=1,
-                               bias=False)
-        self.batch_norm3 = nn.BatchNorm2d(64 * 4)
-        self.conv4 = nn.Conv2d(in_channels=64 * 4,
-                               out_channels=64 * 8,
-                               kernel_size=4,
-                               stride=2,
-                               padding=1,
-                               bias=False)
-        self.batch_norm4 = nn.BatchNorm2d(64 * 8)
-        self.conv5 = nn.Conv2d(in_channels=64 * 8,
-                               out_channels=1,
-                               kernel_size=4,
-                               stride=1,
-                               padding=0,
-                               bias=False)
-        self.linear1 = nn.Linear(in_features=64 * 8 * 4 * 4,
-                                 out_features=100,
-                                 bias=True)
-        self.tanh = nn.Tanh()
-        self.apply(weights_init)
+        num_layers = int(log2(image_size) - 1)
+        num_init_filters = 3 if not transparent else 4
+
+        blocks = []
+        filters = [num_init_filters] + \
+            [(network_capacity) * (2 ** i) for i in range(num_layers + 1)]
+        chan_in_out = list(zip(filters[0:-1], filters[1:]))
+
+        blocks = []
+        for ind, (in_chan, out_chan) in enumerate(chan_in_out):
+            is_not_last = ind < (len(chan_in_out) - 1)
+
+            block = DiscriminatorBlock(
+                in_chan,
+                out_chan,
+                downsample=is_not_last
+            )
+            blocks.append(block)
+
+        self.blocks = nn.Sequential(*blocks)
+
+        last_layers = [
+            nn.Linear(512*2*2, 512*2),
+            nn.LeakyReLU(0.2),
+            nn.Linear(512*2, 100),
+            nn.Tanh()
+        ]
+        self.last_layers = nn.Sequential(*last_layers)
 
     def forward(self, x):
-        in_size = x.size(0)
-        out = self.conv1(x)
-        out = self.relu(out)
-        out = self.conv2(out)
-        out = self.batch_norm2(out)
-        out = self.relu(out)
-        out = self.conv3(out)
-        out = self.batch_norm3(out)
-        out = self.relu(out)
-        out = self.conv4(out)
-        out = self.batch_norm4(out)
-        out = self.relu(out)
-        out = out.view(in_size, -1)
-        out = self.linear1(out)
-        out = self.tanh(out)
-        return out
+        b, *_ = x.shape
+        x = self.blocks(x)
+        x = x.reshape(b, -1)
+        x = self.last_layers(x)
+        return x

@@ -104,8 +104,8 @@ def set_requires_grad(model, bool):
 def compare_num_tenToTwo(a, b, num_len):
     numberof2_list_a = str(bin(a)).split('0b')
     numberof2_list_b = str(bin(b)).split('0b')
-    numberof2_list_a = list(numberof2_list_a[1])
-    numberof2_list_b = list(numberof2_list_b[1])
+    numberof2_list_a = list(numberof2_list_a[1])[-num_len:]
+    numberof2_list_b = list(numberof2_list_b[1])[-num_len:]
     while len(numberof2_list_a) < num_len:
         numberof2_list_a = ['0'] + numberof2_list_a
     while len(numberof2_list_b) < num_len:
