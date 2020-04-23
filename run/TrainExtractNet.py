@@ -100,8 +100,6 @@ class Trainer():
             self.init_ExtractNet()
         assert self.StyleGAN is not None, 'You must first initialize the Style GAN'
 
-        BER_1, BER_2, BER_3 = 0., 0., 0.
-
         # train
         self.ExtractNet.E_opt.zero_grad()
         w_styles, noise_styles, secret = self.sample_StyleGAN_input_data()
@@ -121,9 +119,9 @@ class Trainer():
         self.ExtractNet.E_opt.step()
 
         self.tb_writer.add_scalar('Train/loss', self.E_loss, self.steps)
-        self.tb_writer.add_scalars('Train/BERs',  {'BER1': BER_1,
-                                                   'BER2': BER_2,
-                                                   'BER3': BER_3
+        self.tb_writer.add_scalars('Train/BERs',  {'BER1': self.BER_1,
+                                                   'BER2': self.BER_2,
+                                                   'BER3': self.BER_3
                                                    }, self.steps)
         self.tb_writer.flush()
         # save from NaN errors
