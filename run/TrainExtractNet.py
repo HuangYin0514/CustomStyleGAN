@@ -109,12 +109,11 @@ class Trainer():
         E_loss = divergence
         E_loss.register_hook(raise_if_nan)
         E_loss.backward()
-        # record total loss
         # compute BER
         self.BER_1 = compute_BER(decode.detach(), secret, sigma=1)
         self.BER_2 = compute_BER(decode.detach(), secret, sigma=2)
         self.BER_3 = compute_BER(decode.detach(), secret, sigma=3)
-
+        # record total loss
         self.E_loss = float(divergence.detach().item())
         self.ExtractNet.E_opt.step()
 
@@ -146,7 +145,7 @@ class Trainer():
 
     def print_log(self):
         print(
-            f'E: {self.E_loss:.2f} | BER_1: {self.BER_1:.2f} | BER_2: {self.BER_2:.2f} | BER_3: {self.BER_3:.2f}'
+            f'E: {self.E_loss:.2f} | BER_1: {self.BER_1:.4f} | BER_2: {self.BER_2:.4f} | BER_3: {self.BER_3:.4f}'
         )
 
     def load_part_state_dict(self, num=-1):
