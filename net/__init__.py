@@ -6,3 +6,4 @@ from .Discriminator import Discriminator
 from .Stylegan import StyleGAN2
 from .ExtractModule import ExtractModule
 from .ExtractNet import ExtractNet
+from .BackOptNet import BackOptNet
