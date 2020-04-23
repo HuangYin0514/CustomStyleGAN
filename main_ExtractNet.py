@@ -29,7 +29,13 @@ def train_from_folder(data='CustomNone',
                       lr=learning_rate,
                       save_every=save_every,)
 
+    #init style gan not extract
     trainer.init_StyleGAN(StyleGAN_load_from)
+
+    if not new:
+        trainer.load_part_state_dict(load_from)
+    else:
+        trainer.clear()
 
     # TODO
     if valid_acc:

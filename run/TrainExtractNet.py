@@ -27,6 +27,7 @@ num_cores = multiprocessing.cpu_count()
 
 
 class Trainer():
+
     def __init__(self,
                  name,
                  results_dir,
@@ -91,7 +92,6 @@ class Trainer():
         secret = noise
         return w_styles, noise_styles, secret
 
-    # TODO
     def train(self):
 
         if self.ExtractNet is None:
@@ -151,13 +151,15 @@ class Trainer():
         rmtree(f'./logs/{self.name}', True)
         (self.log_dir / self.name).mkdir(parents=True, exist_ok=True)
 
-    # TODO laod model
     def load_part_state_dict(self, num=-1):
+
+        if self.ExtractNet is None:
+            self.init_ExtractNet()
 
         name = num
         if num == -1:
             file_paths = [
-                p for p in Path(self.models_dir / self.name).glob('model_*.pt')
+                p for p in Path(self.models_dir / self.name).glob('modelE_*.pt')
             ]
             saved_nums = sorted(
                 map(lambda x: int(x.stem.split('_')[1]), file_paths))
@@ -166,7 +168,7 @@ class Trainer():
             name = saved_nums[-1]
             print(f'continuing from previous epoch - {name}')
 
-        load_model_name = f'model_{name}.pt'
+        load_model_name = f'modelE_{name}.pt'
         ExtractNet = torch.load(
             load_model_name, map_location=torch.device(device))
 
@@ -174,4 +176,4 @@ class Trainer():
             self.ExtractNet.state_dict(
             )[state_name][:] = ExtractNet[state_name]
 
-        print(load_model_name)
+        print(f'load stylegan from {load_model_name}')
