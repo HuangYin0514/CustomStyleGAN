@@ -68,5 +68,5 @@ class ExtractModule(nn.Module):
         out = self.relu(out)
         out = out.view(in_size, -1)
         out = self.linear1(out)
-        out = self.tanh(out)
+        # out = self.tanh(out)
         return out

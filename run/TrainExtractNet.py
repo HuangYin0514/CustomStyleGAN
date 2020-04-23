@@ -114,6 +114,9 @@ class Trainer():
         self.BER_1 = compute_BER(decode.detach(), secret, sigma=1)
         self.BER_2 = compute_BER(decode.detach(), secret, sigma=2)
         self.BER_3 = compute_BER(decode.detach(), secret, sigma=3)
+        # print(decode)
+        # print('**'*100)
+        # print(secret)
         # record total loss
         self.E_loss = float(divergence.detach().item())
         self.ExtractNet.E_opt.step()
