@@ -106,7 +106,7 @@ class Trainer():
         w_styles, noise_styles, secret = self.sample_StyleGAN_input_data()
         generated_images = self.StyleGAN.G(w_styles, noise_styles)
         decode = self.ExtractNet.E(generated_images.clone().detach())
-        divergence = self.MSELoss(decode,secret)
+        divergence = self.batch_size *self.MSELoss(decode,secret)
         E_loss = divergence
         E_loss.register_hook(raise_if_nan)
         E_loss.backward()
