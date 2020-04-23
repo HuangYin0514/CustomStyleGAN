@@ -1,4 +1,4 @@
-model_*
+*.pt
 **/__pycache__/
 **/GoodResult/
 **/checkpoint/
