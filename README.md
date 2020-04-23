@@ -1,3 +1,3 @@
-# StyleganNoise
+# Custom StyleganNoise
 
-    在原始styleGAN的基础上增加noise层
+    在原始styleGAN的基础上进行改进
