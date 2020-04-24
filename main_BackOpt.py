@@ -16,9 +16,9 @@ def train_from_folder(data='CustomNone',
                       load_from_extract=0,
                       load_from_style=14,
                       batch_size=3,
-                      num_train_steps=50000,
+                      num_train_steps=300,
                       learning_rate=2e-4,
-                      save_every=10000,
+                      save_every=300,
                       valid_acc=False,
                       StyleGAN_load_from=14):
 
@@ -49,9 +49,8 @@ def train_from_folder(data='CustomNone',
         if _ % 500 == 0:
             if datetime.now().timestamp() - train_now > 29880:
                 break
-        if _ % 50 == 0:
-            # TODO log
-            pass
+        if _ % 10 == 0:
+            trainer.print_log()
 
 
 if __name__ == "__main__":

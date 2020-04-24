@@ -31,7 +31,7 @@ class BackOptNet(nn.Module):
         self.E = ExtractModule()
 
         generator_params = list(self.N.parameters())
-        self.net_opt = torch.optim.Adam(generator_params,
+        self.N_opt = torch.optim.Adam(generator_params,
                                         lr=self.lr,
                                         betas=(self.beta1, self.beta2))
 

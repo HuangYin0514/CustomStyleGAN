@@ -136,7 +136,7 @@ class Trainer():
         self.steps += 1
 
     def model_name(self, num):
-        return str(self.models_dir / self.name / f'model_E{num}.pt')
+        return str(self.models_dir / self.name / f'modelE_{num}.pt')
 
     def save(self, num):
         torch.save(self.ExtractNet.state_dict(), self.model_name(num))
@@ -172,7 +172,6 @@ class Trainer():
         load_model_name = f'modelE_{name}.pt'
         ExtractNet = torch.load(
             load_model_name, map_location=torch.device(device))
-
         for state_name in ExtractNet:
             self.ExtractNet.state_dict(
             )[state_name][:] = ExtractNet[state_name]
