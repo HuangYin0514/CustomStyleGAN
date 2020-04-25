@@ -116,7 +116,7 @@ class Trainer():
         factors = (1-10) / \
             (noise_styles.max()-noise_styles.min())
         noise_styles = 1+factors*(noise_styles - noise_styles.max())
-        noise_styles = -torch.log10(noise_styles)
+        noise_styles = torch.log10(noise_styles)
         # noise_styles = noise_styles*torch.randn(self.batch_size,64,64,1)
         # noise_styles = nn.Sigmoid()(noise_styles)*0.5
         # noise_styles = (noise_styles)/noise_styles.max()
