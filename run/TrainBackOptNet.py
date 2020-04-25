@@ -185,8 +185,7 @@ class Trainer():
         if self.NET is None:
             self.init_NET()
 
-        name = style_num
-        load_model_name = f'model_{name}.pt'
+        load_model_name = f'model_{style_num}.pt'
         load_model = torch.load(
             load_model_name, map_location=torch.device(device))
         # load style gan
@@ -200,15 +199,16 @@ class Trainer():
         print(f'load from {load_model_name}')
         print(f'dont load {dont_load_list[0:2]} ...')
 
-        # load extract
-        load_model_name = f'modelE_{extract_num}.pt'
-        load_model = torch.load(
-            load_model_name, map_location=torch.device(device))
-        for state_name in load_model:
-            if load_model[state_name].shape == torch.Size([]):
+        if extract_num != -1:
+            # load extract
+            load_model_name = f'modelE_{extract_num}.pt'
+            load_model = torch.load(
+                load_model_name, map_location=torch.device(device))
+            for state_name in load_model:
+                if load_model[state_name].shape == torch.Size([]):
+                    self.NET.state_dict(
+                    )[state_name] = load_model[state_name]
+                    continue
                 self.NET.state_dict(
-                )[state_name] = load_model[state_name]
-                continue
-            self.NET.state_dict(
-            )[state_name][:] = load_model[state_name]
-        print(f'load from {load_model_name}')
+                )[state_name][:] = load_model[state_name]
+            print(f'load from {load_model_name}')
