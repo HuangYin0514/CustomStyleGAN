@@ -157,7 +157,7 @@ class Trainer():
             'BackOpt_images', generated_images, self.steps)
 
         fig = plt.figure()
-        plt.hist(noise_styles[0].reshape(-1).detach().numpy())
+        plt.hist(noise_styles[0].reshape(-1)..cpu().detach().numpy())
         plt.xlim((-3, 5))
         # plt.ylim((0, 60))
         plt.savefig(f'./image/{self.steps}.png')
