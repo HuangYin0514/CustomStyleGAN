@@ -11,14 +11,14 @@ def train_from_folder(data='CustomNone',
                       results_dir='./GoodResult/results',
                       models_dir='./GoodResult/models',
                       log_dir='./GoodResult/logs',
-                      name='ExtractNet',
+                      name=f'BackOpt {datetime.now().hour}/{datetime.now().minute}',
                       new=False,
                       load_from_extract=0,
-                      load_from_style=14,
+                      load_from_style=10,
                       batch_size=3,
-                      num_train_steps=300,
+                      num_train_steps=100,
                       learning_rate=2e-4,
-                      save_every=300,
+                      save_every=100,
                       valid_acc=False,
                       StyleGAN_load_from=14):
 
@@ -50,7 +50,8 @@ def train_from_folder(data='CustomNone',
             if datetime.now().timestamp() - train_now > 29880:
                 break
         if _ % 10 == 0:
-            trainer.print_log()
+            pass
+            # trainer.print_log()
 
 
 if __name__ == "__main__":

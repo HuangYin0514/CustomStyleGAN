@@ -10,11 +10,11 @@ from IPython import get_ipython
 
 from net import *
 from utils import *
-from run import Trainer
+from run.TrainStylegan2WithNoise import Trainer
 
 # %%
 GAN = None
-load_model_name = 'model_14WithNoise.pt'
+load_model_name = 'model_10.pt'
 device = torch.device("cuda:0" if (torch.cuda.is_available()) else "cpu")
 GAN = StyleGAN2(lr=2e-4,
                 image_size=64,
@@ -91,6 +91,7 @@ style_n = noise(num_rows, latent_dim)  # mix image
 # noise
 noise_ = custom_image_nosie(num_rows**2, 100)
 n = latent_to_nosie(GAN.N, noise_)
+n = nn.Sigmoid()(n)
 #####################
 
 # %%
@@ -156,13 +157,12 @@ plt.imshow(np.transpose(vutils.make_grid(generated_images,
 
 # %%
 #noise
-input_ = torch.randn(10, 100)
-sigmoid_output = GAN.N(input_)
-sigmoid_output_np = sigmoid_output.detach().numpy()
-sigmoid_output_shape = sigmoid_output_np.reshape(-1, 64*64)
-plt.hist(sigmoid_output_shape[0])
+# sigmoid_output = GAN.N(n)
+# sigmoid_output_np = sigmoid_output.detach().numpy()
+# sigmoid_output_shape = sigmoid_output_np.reshape(-1, 64*64)
+# plt.hist(sigmoid_output_shape[0])
 # %%
-plt.hist(noise_[0])
+plt.hist(n.detach().numpy()[0].reshape(-1))
 
 # %%
 #w
@@ -175,3 +175,9 @@ plt.hist(w_styles[0, 0, :].detach().numpy())
 
 
 
+
+
+# %%
+
+
+# %%

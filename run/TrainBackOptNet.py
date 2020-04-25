@@ -13,6 +13,7 @@ import torchvision
 import torchvision.utils as vutils
 from tensorboardX import SummaryWriter
 from torch.utils import data
+import matplotlib.pyplot as plt
 
 from net import BackOptNet
 from utils import *
@@ -63,12 +64,13 @@ class Trainer():
             self.init_NET()
 
         batch_size = self.batch_size
-        latent_dim = self.NET.G.latent_dim
-        num_layers = self.NET.G.num_layers
+        latent_dim = self.NET.GE.latent_dim
+        num_layers = self.NET.GE.num_layers
 
         get_latents_fn = mixed_list if random() < self.mixed_prob else noise_list
         self.style = get_latents_fn(batch_size, num_layers, latent_dim)
         self.noise = custom_image_nosie(batch_size, 100)
+        self.ori_image = None
 
     def init_NET(self):
         self.NET = BackOptNet(self.lr)
@@ -77,18 +79,54 @@ class Trainer():
     def train(self):
         assert self.init_NET is not None, 'You must first initialize the NET'
 
-        # w
-        w_space = latent_to_w(self.NET.S, self.style)
-        w_styles = styles_def_to_tensor(w_space)
-        # noise
-        noise_styles = latent_to_nosie(self.NET.N, self.noise)
         secret = self.noise
 
+        # if self.steps == 0:
+        #     self.noise_styles = latent_to_nosie(self.NET.NE, self.noise)
+        #     # noise_styles_1 = torch.transpose(noise_styles, 1, 3)
+        #     # noise_styles_1 = nn.BatchNorm2d(1, affine=False)(noise_styles_1)
+        #     # noise_styles_1 = torch.transpose(noise_styles_1, 1, 3)
+        #     noise_styles_1 = nn.Sigmoid()(noise_styles)
+        #     self.ori_image = self.NET.GE(w_styles, noise_styles_1).detach()
+        #     plt.figure()
+        #     plt.hist(noise_styles_1[0].squeeze().detach().numpy())
+        #     plt.show()
+        #     plt.xlim((-6, 6))
+        #     plt.ylim((0, 60))
+        #     plt.savefig('./image/ori.png')
         # train
-        self.NET.N.zero_grad()
-        generated_images = self.NET.G(w_styles, noise_styles)
+        self.NET.NE.zero_grad()
+        # noise
+        self.noise = custom_image_nosie(self.batch_size, 100)
+        noise_styles = latent_to_nosie(self.NET.NE, self.noise)
+
+        # w
+        w_space = latent_to_w(self.NET.SE, self.style)
+        w_styles = styles_def_to_tensor(w_space)
+
+        # noise_styles = nn.Sigmoid()(noise_styles)
+        # noise_styles = noise_styles*0.01
+        # noise_styles = torch.transpose(noise_styles, 1, 3)
+        # noise_styles = nn.BatchNorm2d(1, affine=False)(noise_styles)
+        # noise_styles = torch.transpose(noise_styles, 1, 3)
+        noise_styles_std = torch.std(noise_styles)
+        noise_styles_mean = torch.mean(noise_styles)
+        # noise_styles = (noise_styles-noise_styles_mean)/(noise_styles_std+1e-8)
+        # noise_styles = (noise_styles-noise_styles_mean) / \
+        #     (noise_styles.max()-noise_styles.min())
+        # noise_styles = noise_styles*torch.randn(self.batch_size,64,64,1)
+        # noise_styles = nn.Sigmoid()(noise_styles)
+
+        generated_images = self.NET.GE(w_styles, noise_styles)
         decode = self.NET.E(generated_images)
-        divergence = self.batch_size * self.MSELoss(decode, secret)
+        # D_help_loss = self.NET.D(generated_images)
+        # D_help_loss = D_help_loss.mean()
+        secret_loss = self.MSELoss(decode, secret)
+        # image_loss = self.MSELoss(generated_images, self.ori_image)
+        image_loss = 0
+        # divergence = self.batch_size * \
+        #     (10*secret_loss+0.1*image_loss+0.001*D_help_loss)
+        divergence = self.batch_size * (10*secret_loss)
         E_loss = divergence
         E_loss.register_hook(raise_if_nan)
         E_loss.backward()
@@ -98,14 +136,33 @@ class Trainer():
         self.BER_3 = compute_BER(decode.detach(), secret, sigma=3)
         # record total loss
         self.E_loss = float(divergence.detach().item())
-        self.NET.N_opt.step()
+        self.NET.opt.step()
+        self.NET.scheduler.step(E_loss.item())
+
+        if self.steps % 10 == 0:
+            print(
+                f'E: {self.E_loss:.2f} | BER_1: {self.BER_1:.4f} | BER_2: {self.BER_2:.4f} | BER_3: {self.BER_3:.4f}  ')
 
         self.tb_writer.add_scalar('Train/loss', self.E_loss, self.steps)
         self.tb_writer.add_scalars('Train/BERs',  {'BER1': self.BER_1,
                                                    'BER2': self.BER_2,
                                                    'BER3': self.BER_3
                                                    }, self.steps)
-        self.tb_writer.flush()
+        self.tb_writer.add_scalar(
+            'Train/image_mse', image_loss, self.steps)
+        generated_images = vutils.make_grid(generated_images.detach().cpu(),
+                                            padding=2,
+                                            normalize=True)
+        self.tb_writer.add_image(
+            'BackOpt_images', generated_images, self.steps)
+
+        fig = plt.figure()
+        plt.hist(noise_styles[0].reshape(-1).detach().numpy())
+        plt.xlim((-3, 5))
+        # plt.ylim((0, 60))
+        plt.savefig(f'./image/{self.steps}.png')
+        plt.close()
+        self.steps += 1
 
     def model_name(self, num):
         return str(self.models_dir / self.name / f'model_E{num}.pt')
@@ -116,7 +173,6 @@ class Trainer():
     def init_folders(self):
         (self.results_dir / self.name).mkdir(parents=True, exist_ok=True)
         (self.models_dir / self.name).mkdir(parents=True, exist_ok=True)
-        rmtree(f'./logs/{self.name}', True)
         (self.log_dir / self.name).mkdir(parents=True, exist_ok=True)
 
     def print_log(self):

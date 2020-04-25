@@ -24,16 +24,26 @@ class BackOptNet(nn.Module):
         self.beta1 = beta1
         self.beta2 = beta2
 
-        self.S = StyleVectorizer(latent_dim, style_depth)
-        self.N = NoiseVectorizer(noise_dim)
-        self.G = Generator(image_size, latent_dim,
-                           network_capacity, transparent=transparent)
+        self.SE = StyleVectorizer(latent_dim, style_depth)
+        self.NE = NoiseVectorizer(noise_dim)
+        self.GE = Generator(image_size, latent_dim,
+                            network_capacity, transparent=transparent)
+        self.D = Discriminator(image_size, network_capacity,
+                               transparent=transparent)
         self.E = ExtractModule()
 
-        generator_params = list(self.N.parameters())
-        self.N_opt = torch.optim.Adam(generator_params,
-                                        lr=self.lr,
-                                        betas=(self.beta1, self.beta2))
+        generator_params = list(self.NE.parameters())
+        print(list(self.NE.state_dict())[-2::2])
+        self.opt = torch.optim.Adam(generator_params,
+                                    lr=self.lr,
+                                    betas=(self.beta1, self.beta2))
+
+        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.opt,
+                                                                    'min',
+                                                                    factor=0.5,
+                                                                    patience=3,
+                                                                    verbose=True,
+                                                                    threshold=0.001)
 
         self._init_weights()
 

@@ -2,7 +2,7 @@
 import fire
 from retry.api import retry_call
 from tqdm import tqdm
-from run import Trainer
+from run.TrainStylegan2WithNoise import Trainer
 from utils import NanException
 from datetime import datetime
 
@@ -13,7 +13,7 @@ def train_from_folder(data='../../gan/custom_dataset',
                       log_dir='./GoodResult/logs',
                       name='mytest',
                       new=False,
-                      load_from=11,
+                      load_from=10,
                       image_size=64,
                       network_capacity=16,
                       transparent=False,
