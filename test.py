@@ -101,11 +101,11 @@ if __name__ == '__main__':
     # n = nn.Sigmoid()(n)
     n = torch.randn(num_rows**2, 64, 64, 1)*10000
     # n= n.clamp_(0.9, 1.)
-    n_std = torch.std(n)
-    n_mean = torch.mean(n)
-    n = (n-n_mean)/(n_std+1e-8)
+    # n_std = torch.std(n)
+    # n_mean = torch.mean(n)
+    # n = (n-n_mean)/(n_std+1e-8)
     # moving averages
-    n = nn.Sigmoid()(n)
+    n = nn.Sigmoid()(n)*0.5
     generated_images = trainer.generate_truncated(GAN.SE,
                                                   GAN.GE,
                                                   latents,

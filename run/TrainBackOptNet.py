@@ -97,7 +97,6 @@ class Trainer():
         # train
         self.NET.NE.zero_grad()
         # noise
-        self.noise = custom_image_nosie(self.batch_size, 100)
         noise_styles = latent_to_nosie(self.NET.NE, self.noise)
 
         # w
@@ -111,11 +110,11 @@ class Trainer():
         # noise_styles = torch.transpose(noise_styles, 1, 3)
         noise_styles_std = torch.std(noise_styles)
         noise_styles_mean = torch.mean(noise_styles)
-        # noise_styles = (noise_styles-noise_styles_mean)/(noise_styles_std+1e-8)
+        noise_styles = (noise_styles-noise_styles_mean)/(noise_styles_std+1e-8)
         # noise_styles = (noise_styles-noise_styles_mean) / \
         #     (noise_styles.max()-noise_styles.min())
         # noise_styles = noise_styles*torch.randn(self.batch_size,64,64,1)
-        # noise_styles = nn.Sigmoid()(noise_styles)
+        noise_styles = nn.Sigmoid()(noise_styles)
 
         generated_images = self.NET.GE(w_styles, noise_styles)
         decode = self.NET.E(generated_images)
