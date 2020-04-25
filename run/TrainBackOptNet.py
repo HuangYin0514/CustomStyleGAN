@@ -174,6 +174,7 @@ class Trainer():
         (self.results_dir / self.name).mkdir(parents=True, exist_ok=True)
         (self.models_dir / self.name).mkdir(parents=True, exist_ok=True)
         (self.log_dir / self.name).mkdir(parents=True, exist_ok=True)
+        (Path('./image')).mkdir(parents=True, exist_ok=True)
 
     def print_log(self):
         print(
