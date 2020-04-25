@@ -108,9 +108,9 @@ class Trainer():
         # noise_styles = torch.transpose(noise_styles, 1, 3)
         # noise_styles = nn.BatchNorm2d(1, affine=False)(noise_styles)
         # noise_styles = torch.transpose(noise_styles, 1, 3)
-        noise_styles_std = torch.std(noise_styles)
-        noise_styles_mean = torch.mean(noise_styles)
-        noise_styles = (noise_styles-noise_styles_mean)/(noise_styles_std+1e-8)
+        # noise_styles_std = torch.std(noise_styles)
+        # noise_styles_mean = torch.mean(noise_styles)
+        # noise_styles = (noise_styles-noise_styles_mean)/(noise_styles_std+1e-8)
         # noise_styles = (noise_styles-noise_styles_mean) / \
         #     (noise_styles.max()-noise_styles.min())
         # noise_styles = noise_styles*torch.randn(self.batch_size,64,64,1)
