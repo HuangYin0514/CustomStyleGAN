@@ -41,9 +41,9 @@ class BackOptNet(nn.Module):
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.opt,
                                                                     'min',
                                                                     factor=0.8,
-                                                                    patience=20,
+                                                                    patience=4,
                                                                     verbose=True,
-                                                                    threshold=0.0001)
+                                                                    threshold=0.001)
 
         self._init_weights()
 
