@@ -130,7 +130,7 @@ class Trainer():
         image_loss = 0
         # divergence = self.batch_size * \
         #     (10*secret_loss+0.1*image_loss+0.001*D_help_loss)
-        divergence = self.batch_size * (500*secret_loss)
+        divergence = self.batch_size * (100*secret_loss)
         E_loss = divergence
         E_loss.register_hook(raise_if_nan)
         E_loss.backward()
