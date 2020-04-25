@@ -43,7 +43,7 @@ class BackOptNet(nn.Module):
                                                                     factor=0.5,
                                                                     patience=3,
                                                                     verbose=True,
-                                                                    threshold=0.001)
+                                                                    threshold=0.00001)
 
         self._init_weights()
 
