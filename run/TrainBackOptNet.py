@@ -114,7 +114,7 @@ class Trainer():
         # noise_styles = (noise_styles-noise_styles_mean) / \
         #     (noise_styles.max()-noise_styles.min())
         # noise_styles = noise_styles*torch.randn(self.batch_size,64,64,1)
-        noise_styles = nn.Sigmoid()(noise_styles)
+        noise_styles = nn.Sigmoid()(noise_styles)*0.5
 
         generated_images = self.NET.GE(w_styles, noise_styles)
         decode = self.NET.E(generated_images)
@@ -141,7 +141,6 @@ class Trainer():
         if self.steps % 10 == 0:
             print(
                 f'E: {self.E_loss:.2f} | BER_1: {self.BER_1:.4f} | BER_2: {self.BER_2:.4f} | BER_3: {self.BER_3:.4f}  ')
-
         self.tb_writer.add_scalar('Train/loss', self.E_loss, self.steps)
         self.tb_writer.add_scalars('Train/BERs',  {'BER1': self.BER_1,
                                                    'BER2': self.BER_2,
@@ -154,6 +153,10 @@ class Trainer():
                                             normalize=True)
         self.tb_writer.add_image(
             'BackOpt_images', generated_images, self.steps)
+
+        if self.steps == 0:
+            self.tb_writer.add_image(
+                'ori_image', generated_images, self.steps)
 
         fig = plt.figure()
         plt.hist(noise_styles[0].reshape(-1).cpu().detach().numpy())
