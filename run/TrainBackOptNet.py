@@ -114,7 +114,7 @@ class Trainer():
         # noise_styles = (noise_styles-noise_styles_mean) / \
         #     (noise_styles.max()-noise_styles.min())
         # noise_styles = noise_styles*torch.randn(self.batch_size,64,64,1)
-        noise_styles = nn.Sigmoid()(noise_styles)*0.5
+        # noise_styles = nn.Sigmoid()(noise_styles)*0.5
 
         generated_images = self.NET.GE(w_styles, noise_styles)
         decode = self.NET.E(generated_images)
