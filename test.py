@@ -89,23 +89,35 @@ def generate_images(stylizer, generator, latents, noise):
 
 if __name__ == '__main__':
     trainer = init_train()
-    num_rows = 4
+    num_rows = 8
     # w
     latents = noise_list(num_rows**2, num_layers, latent_dim)
-    style_n = noise(num_rows, latent_dim)  # mix image
+    # style_n = noise(num_rows, latent_dim)  # mix image
+    # latents = noise_list(1, num_layers, latent_dim)
+    # latents = latents*num_rows
+    latents = [(noise(1, latent_dim).repeat(num_rows**2,1), 5)]
+    # print(latents)
     # noise
     # noise_ = custom_image_nosie(num_rows**2, 100)
     # n = latent_to_nosie(GAN.N, noise_)
     # n = nn.Sigmoid()(n)
     # n = torch.zeros(num_rows**2, 64, 64, 1)
     # n = nn.Sigmoid()(n)
-    n = torch.randn(num_rows**2, 64, 64, 1)*10000
+    # n = torch.randn(num_rows**2, 64, 64, 1)*10000
     # n= n.clamp_(0.9, 1.)
     # n_std = torch.std(n)
     # n_mean = torch.mean(n)
     # n = (n-n_mean)/(n_std+1e-8)
     # moving averages
-    n = nn.Sigmoid()(n)*0.5
+    # n = nn.Sigmoid()(n)*0.5
+
+    
+    n = torch.rand(num_rows**2, 64, 64, 1)
+    #same noise
+    # n = torch.rand(1, 64, 64, 1)
+    # n = n.repeat(num_rows**2, 1,1,1)
+    # print(n.size())
+    n = torch.log10(n+1)
     generated_images = trainer.generate_truncated(GAN.SE,
                                                   GAN.GE,
                                                   latents,

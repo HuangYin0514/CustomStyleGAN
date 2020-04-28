@@ -109,25 +109,28 @@ class Trainer():
         # noise_styles = nn.BatchNorm2d(1, affine=False)(noise_styles)
         # noise_styles = torch.transpose(noise_styles, 1, 3)
         # noise_styles_std = torch.std(noise_styles)
-        noise_styles_mean = torch.mean(noise_styles)
+        # noise_styles_mean = torch.mean(noise_styles)
         # noise_styles = (noise_styles-noise_styles_mean)/(noise_styles_std**2+1e-8)+0.5
         # noise_styles = (noise_styles-noise_styles_mean) / \
         #     (noise_styles.max()-noise_styles.min())
-        factors = (1-10) / \
-            (noise_styles.max()-noise_styles.min())
-        noise_styles = 1+factors*(noise_styles - noise_styles.max())
-        noise_styles = torch.log10(noise_styles)
+        # factors = (1-10) / \
+        #     (noise_styles.max()-noise_styles.min())
+        # noise_styles = 1+factors*(noise_styles - noise_styles.max())
+        
         # noise_styles = noise_styles*torch.randn(self.batch_size,64,64,1)
         # noise_styles = nn.Sigmoid()(noise_styles)*0.5
         # noise_styles = (noise_styles)/noise_styles.max()
 
+        # noise_styles = nn.Sigmoid()(noise_styles)
+        # noise_styles = torch.log10(noise_styles+1)
         generated_images = self.NET.GE(w_styles, noise_styles)
         decode = self.NET.E(generated_images)
         # D_help_loss = self.NET.D(generated_images)
         # D_help_loss = D_help_loss.mean()
         secret_loss = self.MSELoss(decode, secret)
-        # image_loss = self.MSELoss(generated_images, self.ori_image)
-        image_loss = 0
+        image_mse_loss = 0
+        if self.ori_image != None:
+            image_mse_loss = self.MSELoss(generated_images[0], self.ori_image)
         # divergence = self.batch_size * \
         #     (10*secret_loss+0.1*image_loss+0.001*D_help_loss)
         divergence = self.batch_size * (30*secret_loss)
@@ -152,7 +155,7 @@ class Trainer():
                                                    'BER3': self.BER_3
                                                    }, self.steps)
         self.tb_writer.add_scalar(
-            'Train/image_mse', image_loss, self.steps)
+            'Train/image_mse', image_mse_loss, self.steps)
         generated_images = vutils.make_grid(generated_images.detach().cpu(),
                                             padding=2,
                                             normalize=True)
@@ -162,6 +165,7 @@ class Trainer():
         if self.steps == 0:
             self.tb_writer.add_image(
                 'ori_image', generated_images, self.steps)
+            self.ori_image = generated_images.detach()
 
         fig = plt.figure()
         plt.hist(noise_styles[0].reshape(-1).cpu().detach().numpy())
