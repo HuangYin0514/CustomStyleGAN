@@ -57,8 +57,7 @@ class Trainer():
 
         self.tb_writer = SummaryWriter(self.log_dir / name)
 
-        assert log2(image_size).is_integer(
-        ), 'image size must be a power of 2 (64, 128, 256, 512, 1024)'
+        assert log2(image_size).is_integer( ), 'image size must be a power of 2 (64, 128, 256, 512, 1024)'
         self.image_size = image_size
         self.network_capacity = network_capacity
         self.transparent = transparent
@@ -159,7 +158,7 @@ class Trainer():
             w_space = latent_to_w(self.GAN.S, style)
             w_styles = styles_def_to_tensor(w_space)
             # noise
-            noise = custom_image_nosie(batch_size, 100)
+            noise = custom_image_nosie(batch_size, 120)
             noise_styles = latent_to_nosie(self.GAN.N, noise)
             # trian fake
             generated_images = self.GAN.G(w_styles, noise_styles)
@@ -194,7 +193,7 @@ class Trainer():
             w_space = latent_to_w(self.GAN.S, style)
             w_styles = styles_def_to_tensor(w_space)
             # noise
-            noise = custom_image_nosie(batch_size, 100)
+            noise = custom_image_nosie(batch_size, 120)
             noise_styles = latent_to_nosie(self.GAN.N, noise)
             # fake
             generated_images = self.GAN.G(w_styles, noise_styles)
@@ -281,7 +280,7 @@ class Trainer():
         # w
         latents = noise_list(num_rows**2, num_layers, latent_dim)
         # noise
-        noise_ = custom_image_nosie(num_rows**2, 100)
+        noise_ = custom_image_nosie(num_rows**2, 120)
         n = latent_to_nosie(self.GAN.N, noise_)
 
         # regular
@@ -430,8 +429,7 @@ class Trainer():
         self.steps = name * self.save_every
         load_model_name = f'model_{name}.pt'
 
-        load_temp_GAN = torch.load(
-            load_model_name, map_location=torch.device(device))
+        load_temp_GAN = torch.load(load_model_name, map_location=torch.device(device))
 
         for state_name in load_temp_GAN:
             self.GAN.state_dict()[state_name][:] = load_temp_GAN[state_name]

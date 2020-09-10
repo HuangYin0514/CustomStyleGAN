@@ -217,8 +217,7 @@ class Trainer():
                 load_model_name, map_location=torch.device(device))
             for state_name in load_model:
                 if load_model[state_name].shape == torch.Size([]):
-                    self.NET.state_dict(
-                    )[state_name] = load_model[state_name]
+                    self.NET.state_dict()[state_name] = load_model[state_name]
                     continue
                 self.NET.state_dict(
                 )[state_name][:] = load_model[state_name]
